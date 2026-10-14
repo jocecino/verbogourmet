@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#7a1f2b">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0e2a52">
 <title>Verbo Gourmet</title>
 <style>
 *{box-sizing:border-box;margin:0;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif}
-:root{--b:#7a1f2b;--bg:#f3efea;--c:#fff;--t:#241c1c;--m:#7b706c;--ok:#2e7d4f;--no:#b3261e}
-@media(prefers-color-scheme:dark){:root{--bg:#141212;--c:#221f1f;--t:#f1ebe8;--m:#a39995}}
-body{background:var(--bg);color:var(--t);padding-top:env(safe-area-inset-top)}
-#login{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;padding:24px 24px calc(32px + env(safe-area-inset-bottom));background:var(--b) center/cover;color:#fff}
+:root{--b:#0e2a52;--bg:#e9eef5;--c:#fff;--t:#0f1b2e;--m:#5f6f87;--ok:#2e7d4f;--no:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1426;--c:#12213d;--t:#e8edf5;--m:#98a6bd;--b:#2f5fae}}
+body{background:var(--bg);color:var(--t)}
+#login{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:24px;background:radial-gradient(circle at 50% 25%,#1d4378,#0a1d3b 70%);color:#e9eef7}#login>*{width:100%;max-width:340px}#login>#logo{width:190px;border-radius:28px;box-shadow:0 10px 40px #0009;margin-bottom:18px}
 #login h1{font-size:34px;font-weight:700}#login p{opacity:.85;margin-bottom:8px}
 input,select{width:100%;padding:14px;margin-bottom:10px;border-radius:12px;border:1px solid #8884;background:var(--c);color:var(--t);font-size:16px}
 button.p{width:100%;padding:15px;border:0;border-radius:12px;background:var(--b);color:#fff;font-size:17px;font-weight:600}
-#login button.p{background:#fff;color:var(--b)}#err{color:#ffd0d0;min-height:20px}
+#login button.p{background:linear-gradient(#f4f7fb,#b9c4d4);color:#0e2a52}#err{color:#ffd0d0;min-height:20px}
 main{padding:16px 16px 110px}h2{font-size:24px;margin:8px 0 14px}
 .c{background:var(--c);border-radius:16px;padding:14px;margin-bottom:10px}
 .g{display:grid;grid-template-columns:1fr 1fr;gap:10px}.g .c{margin:0}
@@ -21,27 +21,27 @@ main{padding:16px 16px 110px}h2{font-size:24px;margin:8px 0 14px}
 .bt{border:0;background:none;font-size:18px;padding:4px 6px}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:color-mix(in srgb,var(--c) 88%,transparent);backdrop-filter:blur(16px);padding:6px 4px calc(6px + env(safe-area-inset-bottom));border-top:1px solid #8883}
 nav button{flex:1;border:0;background:none;color:var(--m);font-size:11px;padding:4px}nav i{display:block;font-style:normal;font-size:22px}nav .on{color:var(--b);font-weight:700}
-.chip{font-size:12px;padding:3px 9px;border-radius:99px;background:#8882}
+.chip{font-size:12px;padding:3px 9px;border-radius:99px;background:#8882}header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top));background:linear-gradient(#0e2a52,#0a1d3b);color:#e9eef7}header img{width:34px;height:34px;border-radius:8px}header b{flex:1}header .chip{background:#c7cfdb;color:#0e2a52;font-weight:600}header button{border:0;background:none;color:#c7cfdb;font-size:14px}
 @media print{nav,.noprint{display:none}}
 </style></head><body>
-<div id="login"><h1>Verbo Gourmet</h1><p>Financeiro e despesas</p>
+<div id="login"><img id="logo" alt="Verbo Gourmet"><p>Financeiro e despesas</p>
 <input id="pw" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key=='Enter')entrar()">
 <div id="err"></div><button class="p" onclick="entrar()">Entrar</button></div>
 <div id="app" hidden></div>
 <script>
-const API='https://script.google.com/macros/s/AKfycbzG0EHNOLlRbVJtwyJkcS6KMaYsRq_de3b6q9IvSP0D7oyKMQgmmPtlcHRsnB_CuiCmRw/exec', IMG='https://ibb.co/MLTyYjR'; // use o link direto da imagem (i.ibb.co/...)
+const API='https://script.google.com/macros/s/AKfycbzG0EHNOLlRbVJtwyJkcS6KMaYsRq_de3b6q9IvSP0D7oyKMQgmmPtlcHRsnB_CuiCmRw/exec', IMG='https://i.ibb.co/GjwfK1V/IMG-3685.jpg';
 const AC={VENDAS:1,EVENTOS:1,OFERTA:1,SALDO:1,COMPRAS:-1,PAGAMENTO:-1,'DESPESAS IGREJA':-1,'TRANSFERÊNCIA':0};
 let S={t:null,role:null,L:[],D:[],H:[],tab:'rel',mes:'',ed:null};
 const $=s=>document.querySelector(s),R=v=>(+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const adm=()=>S.role=='admin',tot=x=>(+x.conta||0)+(+x.dinheiro||0),sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
 const dt=d=>String(d).split('-').reverse().join('/'),esc=s=>String(s??'').replace(/"/g,'&quot;'),today=()=>new Date().toISOString().slice(0,10);
-$('#login').style.backgroundImage=`linear-gradient(#0004,#000b),url(${IMG})`;
+$('#logo').src=IMG;
 async function api(o){const r=await fetch(API,{method:'POST',body:JSON.stringify({t:S.t,...o})}),j=await r.json();if(j.erro)throw j.erro;return j}
 async function entrar(){try{const j=await api({a:'login',p:$('#pw').value});S.t=j.token;S.role=j.role;S.tab=adm()?'lan':'rel';await load();$('#login').hidden=true;$('#app').hidden=false}catch(e){$('#err').textContent=e}}
 async function load(){const j=await api({a:'list'});Object.assign(S,{L:j.L,D:j.D,H:j.H});draw()}
 async function envia(n,a,r){try{await api({a,n,r});S.ed=null;await load()}catch(e){alert(e);if(/Sessão/.test(e))location.reload()}}
 function draw(){const t=[['rel','📊','Relatório'],['dsp','🧾','Despesas']];if(adm()){t.unshift(['lan','➕','Lançamento']);t.push(['his','🕘','Histórico'])}
-$('#app').innerHTML=`<main>${{rel,dsp,lan,his}[S.tab]()}</main><nav>${t.map(x=>`<button class="${x[0]==S.tab?'on':''}" onclick="S.tab='${x[0]}';S.ed=null;draw()"><i>${x[1]}</i>${x[2]}</button>`).join('')}</nav>`}
+$('#app').innerHTML=`<header class="noprint"><img src="${IMG}"><b>Verbo Gourmet</b><span class="chip">${adm()?'Admin':'Liderança'}</span><button onclick="location.reload()">Sair</button></header><main>${{rel,dsp,lan,his}[S.tab]()}</main><nav>${t.map(x=>`<button class="${x[0]==S.tab?'on':''}" onclick="S.tab='${x[0]}';S.ed=null;draw()"><i>${x[1]}</i>${x[2]}</button>`).join('')}</nav>`}
 function lan(){const e=S.ed||{data:today(),acao:'VENDAS',descricao:'',conta:'',dinheiro:''},n=v=>v?Math.abs(v):'';
 return `<h2>${e.id?'Editar':'Novo'} lançamento</h2><div class="c"><input id="f_d" type="date" value="${e.data}">
 <select id="f_a">${Object.keys(AC).map(k=>`<option ${k==e.acao?'selected':''}>${k}</option>`).join('')}</select>
@@ -53,21 +53,23 @@ return `<h2>${e.id?'Editar':'Novo'} lançamento</h2><div class="c"><input id="f_
 function salvarL(){const a=$('#f_a').value,k=AC[a],c=+$('#f_c').value||0,h=+$('#f_h').value||0;
 if(!$('#f_d').value||!(c||h))return alert('Preencha a data e um valor.');
 envia('Lancamentos',S.ed?'edit':'add',{id:S.ed?.id,data:$('#f_d').value,acao:a,descricao:$('#f_s').value.trim().toUpperCase(),conta:k?k*c:c,dinheiro:k?k*h:-c,usuario:'admin'})}
-function rel(){const ms=[...new Set(S.L.map(x=>x.data.slice(0,7)))].sort().reverse(),m=S.mes||ms[0]||'';
-const rs=S.L.filter(x=>x.data.slice(0,7)==m).sort((a,b)=>a.data<b.data?-1:1),mv=rs.filter(x=>x.acao!='SALDO'&&x.acao!='TRANSFERÊNCIA');
-const en=sum(mv.filter(x=>tot(x)>0),tot),sa=sum(mv.filter(x=>tot(x)<0),tot),ac=S.L.filter(x=>x.data.slice(0,7)<=m);
+function rel(){const ms=[...new Set(S.L.map(x=>x.data.slice(0,7)))].sort().reverse(),m=S.mes||'geral',G=m=='geral';
+const rs=S.L.filter(x=>G||x.data.slice(0,7)==m).sort((a,b)=>a.data<b.data?-1:1),mv=rs.filter(x=>x.acao!='SALDO'&&x.acao!='TRANSFERÊNCIA');
+const en=sum(mv.filter(x=>tot(x)>0),tot),sa=sum(mv.filter(x=>tot(x)<0),tot),ac=S.L.filter(x=>G||x.data.slice(0,7)<=m);
 const cc=sum(ac,x=>+x.conta||0),cd=sum(ac,x=>+x.dinheiro||0),by={};mv.forEach(x=>by[x.acao]=(by[x.acao]||0)+tot(x));
-S.rep=`VERBO GOURMET - ${m.split('-').reverse().join('/')}\nEntradas: ${R(en)}\nSaídas: ${R(-sa)}\nResultado: ${R(en+sa)}\nSaldo em conta: ${R(cc)}\nSaldo em dinheiro: ${R(cd)}\nSaldo total: ${R(cc+cd)}\n`+Object.entries(by).map(([k,v])=>`${k}: ${R(v)}`).join('\n');
-return `<h2>Relatório</h2><select onchange="S.mes=this.value;draw()">${ms.map(x=>`<option value="${x}" ${x==m?'selected':''}>${x.split('-').reverse().join('/')}</option>`).join('')}</select>
+S.rep=`VERBO GOURMET - ${G?'GERAL':m.split('-').reverse().join('/')}\nEntradas: ${R(en)}\nSaídas: ${R(-sa)}\nResultado: ${R(en+sa)}\nSaldo em conta: ${R(cc)}\nSaldo em dinheiro: ${R(cd)}\nSaldo total: ${R(cc+cd)}\n`+Object.entries(by).map(([k,v])=>`${k}: ${R(v)}`).join('\n');
+return `<h2>Relatório</h2><select onchange="S.mes=this.value;draw()"><option value="geral" ${G?'selected':''}>Geral (todos os períodos)</option>${ms.map(x=>`<option value="${x}" ${x==m?'selected':''}>${x.split('-').reverse().join('/')}</option>`).join('')}</select>
 <div class="g"><div class="c">Entradas<b class="in">${R(en)}</b></div><div class="c">Saídas<b class="out">${R(-sa)}</b></div>
 <div class="c">Resultado<b>${R(en+sa)}</b></div><div class="c">Saldo total<b>${R(cc+cd)}</b></div></div>
 <div class="c" style="margin-top:10px"><small>Em conta</small> ${R(cc)} &nbsp; <small>Em dinheiro</small> ${R(cd)}</div>
 <div class="c">${Object.entries(by).map(([k,v])=>`<div class="row"><span>${k}</span><b>${R(v)}</b></div>`).join('')}</div>
 <div class="g noprint" style="margin-bottom:12px"><button class="p" onclick="comp()">Compartilhar</button><button class="p" onclick="csv('${m}')">Baixar Excel</button></div>
 <button class="p noprint" style="margin-bottom:14px;background:#555" onclick="print()">Salvar em PDF</button>
-${rs.map(x=>`<div class="c row"><div><small>${dt(x.data)} · ${x.acao}</small><br>${x.descricao||'-'}</div><div style="text-align:right"><b class="${tot(x)<0?'out':'in'}">${R(tot(x))}</b>${adm()?`<br><button class="bt" onclick="S.ed=S.L.find(y=>y.id=='${x.id}');S.tab='lan';draw()">✏️</button><button class="bt" onclick="confirm('Excluir este lançamento?')&&envia('Lancamentos','del',{id:'${x.id}'})">🗑</button>`:''}</div></div>`).join('')}`}
+${G?mt():rs.map(x=>`<div class="c row"><div><small>${dt(x.data)} · ${x.acao}</small><br>${x.descricao||'-'}</div><div style="text-align:right"><b class="${tot(x)<0?'out':'in'}">${R(tot(x))}</b>${adm()?`<br><button class="bt" onclick="S.ed=S.L.find(y=>y.id=='${x.id}');S.tab='lan';draw()">✏️</button><button class="bt" onclick="confirm('Excluir este lançamento?')&&envia('Lancamentos','del',{id:'${x.id}'})">🗑</button>`:''}</div></div>`).join('')}`}
+function mt(){const o={};S.L.filter(x=>x.acao!='SALDO'&&x.acao!='TRANSFERÊNCIA').forEach(x=>{const k=x.data.slice(0,7),v=o[k]||(o[k]={e:0,s:0});tot(x)>0?v.e+=tot(x):v.s+=tot(x)});
+return Object.keys(o).sort().reverse().map(k=>{const v=o[k];return `<div class="c"><div class="row"><b>${k.split('-').reverse().join('/')}</b><b>${R(v.e+v.s)}</b></div><small class="in">Entradas ${R(v.e)}</small> &nbsp; <small class="out">Saídas ${R(-v.s)}</small></div>`}).join('')}
 function comp(){navigator.share?navigator.share({text:S.rep}):navigator.clipboard.writeText(S.rep).then(()=>alert('Resumo copiado'))}
-function csv(m){const l=S.L.filter(x=>x.data.slice(0,7)==m).map(x=>[dt(x.data),x.acao,`"${x.descricao}"`,x.conta,x.dinheiro,tot(x)].join(';'));
+function csv(m){const l=S.L.filter(x=>m=='geral'||x.data.slice(0,7)==m).map(x=>[dt(x.data),x.acao,`"${x.descricao}"`,x.conta,x.dinheiro,tot(x)].join(';'));
 const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeffData;Ação;Descrição;Conta;Dinheiro;Total\n'+l.join('\n')],{type:'text/csv'}));a.download=`verbo-gourmet-${m}.csv`;a.click()}
 function dsp(){const e=S.ed||{data:today(),item:'',qtd:1,valor:'',status:'Pago'},s=t=>sum(S.D.filter(x=>x.status==t),x=>+x.valor||0);
 return `<h2>Despesas da reforma</h2><div class="g" style="margin-bottom:12px"><div class="c">Pago<b class="in">${R(s('Pago'))}</b></div><div class="c">Pendente<b class="out">${R(s('Pendente'))}</b></div></div>
