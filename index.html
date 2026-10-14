@@ -1,7 +1,8 @@
+<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0e2a52">
-<title>Verbo Gourmet</title>
+<link rel="apple-touch-icon" href="https://i.ibb.co/GjwfK1V/IMG-3685.jpg"><meta name="apple-mobile-web-app-title" content="Verbo Gourmet"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><title>Verbo Gourmet</title>
 <style>
 *{box-sizing:border-box;margin:0;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif}
 :root{--b:#0e2a52;--bg:#e9eef5;--c:#fff;--t:#0f1b2e;--m:#5f6f87;--ok:#2e7d4f;--no:#b3261e}
@@ -28,10 +29,10 @@ nav button{flex:1;border:0;background:none;color:var(--m);font-size:11px;padding
 .toast{position:fixed;top:calc(70px + env(safe-area-inset-top));left:0;right:0;margin:auto;width:max-content;background:#2e7d4f;color:#fff;padding:10px 18px;border-radius:99px;z-index:20;font-weight:600}
 @media print{nav,.noprint{display:none}}
 </style></head><body>
-<div id="login"><img id="logo" alt="Verbo Gourmet" src="https://i.ibb.co/GjwfK1V/IMG-3685.jpg"><p id="sub">Financeiro e despesas</p>
+<div id="login"><img id="logo" alt="Verbo Gourmet"><p id="sub">Financeiro e despesas</p>
 <input id="pw" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key=='Enter')entrar()">
 <div id="err"></div><button class="p" id="go" onclick="entrar()">Entrar</button><div id="wel"></div></div>
-<div id="app" hidden=""></div>
+<div id="app" hidden></div>
 <script>
 const API='https://script.google.com/macros/s/AKfycbzG0EHNOLlRbVJtwyJkcS6KMaYsRq_de3b6q9IvSP0D7oyKMQgmmPtlcHRsnB_CuiCmRw/exec', IMG='https://i.ibb.co/GjwfK1V/IMG-3685.jpg';
 const AC={VENDAS:1,EVENTOS:1,OFERTA:1,SALDO:1,COMPRAS:-1,PAGAMENTO:-1,'DESPESAS IGREJA':-1,'TRANSFERÊNCIA':0};
@@ -42,15 +43,16 @@ const dt=d=>String(d).split('-').reverse().join('/'),esc=s=>String(s??'').replac
 $('#logo').src=IMG;
 async function api(o){const r=await fetch(API,{method:'POST',body:JSON.stringify({t:S.t,...o})}),j=await r.json();if(j.erro)throw j.erro;return j}
 async function entrar(){const b=$('#go');if(b.disabled||!$('#pw').value)return;$('#err').textContent='';b.disabled=true;b.innerHTML='<span class="sp"></span>Verificando...';
-try{const j=await api({a:'login',p:$('#pw').value});S.t=j.token;S.role=j.role;S.tab=adm()?'lan':'rel';
+try{const j=await api({a:'login',p:$('#pw').value});S.t=j.token;S.role=j.role;S.tab=adm()?'lan':'rel';try{localStorage.setItem('vg',JSON.stringify({t:j.token,r:j.role}))}catch(e){}
 $('#wel').innerHTML='<div class="ck">✓</div>'+(adm()?'Bem-vindo, administrador da Verbo Gourmet':'Bem-vindo, liderança da Verbo Sobradinho');$('#login').classList.add('ok');
 await Promise.all([load(),new Promise(r=>setTimeout(r,2200))]);$('#login').hidden=true;$('#app').hidden=false;scrollTo(0,0)}
 catch(e){$('#err').textContent=e;$('#login').classList.remove('ok');b.disabled=false;b.textContent='Entrar'}}
+function sair(){try{localStorage.removeItem('vg')}catch(e){}location.reload()}
 async function load(){const j=await api({a:'list'});Object.assign(S,{L:j.L,D:j.D,H:j.H});draw()}
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
-async function envia(n,a,r){if(S.busy)return;S.busy=1;if(a=='del')r=(n=='Despesas'?S.D:S.L).find(x=>x.id==r.id)||r;try{await api({a,n,r});S.ed=null;await load();toast('✓ Feito')}catch(e){alert(e);if(/Sessão/.test(e))location.reload()}S.busy=0}
-function draw(){const t=[['rel','📊','Relatório'],['dsp','','Despesas gerais']];if(adm()){t.unshift(['lan','➕','Lançamento']);t.push(['his','🕘','Histórico'])}
-$('#app').innerHTML=`<header class="noprint"><img src="${IMG}"><b>Verbo Gourmet</b><span class="chip">${adm()?'Admin':'Liderança'}</span><button onclick="location.reload()">Sair</button></header><main>${{rel,dsp,lan,his}[S.tab]()}</main><nav>${t.map(x=>`<button class="${x[0]==S.tab?'on':''}" onclick="S.tab='${x[0]}';S.ed=null;S.pay=null;draw()"><i>${ic(x[0])}</i>${x[2]}</button>`).join('')}</nav>`}
+async function envia(n,a,r){if(S.busy)return;S.busy=1;if(a=='del')r=(n=='Despesas'?S.D:S.L).find(x=>x.id==r.id)||r;try{await api({a,n,r});S.ed=null;await load();toast('✓ Feito')}catch(e){alert(e);if(/Sessão/.test(e))sair()}S.busy=0}
+function draw(){try{localStorage.setItem('vgt',S.tab)}catch(e){}const t=[['rel','📊','Relatório'],['dsp','','Despesas gerais']];if(adm()){t.unshift(['lan','➕','Lançamento']);t.push(['his','🕘','Histórico'])}
+$('#app').innerHTML=`<header class="noprint"><img src="${IMG}"><b>Verbo Gourmet</b><span class="chip">${adm()?'Admin':'Liderança'}</span><button onclick="sair()">Sair</button></header><main>${{rel,dsp,lan,his}[S.tab]()}</main><nav>${t.map(x=>`<button class="${x[0]==S.tab?'on':''}" onclick="S.tab='${x[0]}';S.ed=null;S.pay=null;draw()"><i>${ic(x[0])}</i>${x[2]}</button>`).join('')}</nav>`}
 function lan(){const d=S.pay&&S.D.find(x=>x.id==S.pay),e=S.ed||(d?{data:today(),acao:'DESPESAS IGREJA',descricao:String(d.item).toUpperCase(),conta:d.valor,dinheiro:''}:{data:today(),acao:'VENDAS',descricao:'',conta:'',dinheiro:''}),n=v=>v?Math.abs(v):'',P=S.D.filter(x=>x.status=='Pendente');
 return `<h2>${e.id?'Editar':'Novo'} lançamento</h2>${!e.id&&P.length?`<div class="c"><small>Pagar uma despesa pendente (opcional)</small><br><br><select onchange="S.pay=this.value;S.ed=null;draw()"><option value="">Escolher despesa...</option>${P.map(x=>`<option value="${x.id}" ${x.id==S.pay?'selected':''}>${x.item} · ${R(x.valor)}</option>`).join('')}</select><small>${d?'Confira o valor e salve: ela sai da lista de pendentes.':''}</small></div>`:''}
 <div class="c"><input id="f_d" type="date" value="${e.data}">
@@ -67,7 +69,7 @@ bt.disabled=true;bt.textContent='Salvando...';
 try{const d=!S.ed&&S.pay&&S.D.find(x=>x.id==S.pay);await api({a:S.ed?'edit':'add',n:'Lancamentos',r});let w='';
 if(d){try{await api({a:'edit',n:'Despesas',r:{...d,status:'Pago'}})}catch(x){w='Lançamento salvo, mas não consegui baixar a despesa pendente. Edite-a em Despesas gerais.'}}
 S.ed=null;S.pay=null;await load();w?alert(w):toast('✓ Lançamento salvo')}
-catch(e){alert(e);if(/Sessão/.test(e))location.reload();bt.disabled=false;bt.textContent='Salvar lançamento'}}
+catch(e){alert(e);if(/Sessão/.test(e))sair();bt.disabled=false;bt.textContent='Salvar lançamento'}}
 function rel(){const ms=[...new Set(S.L.map(x=>x.data.slice(0,7)))].sort().reverse(),m=S.mes||'geral',G=m=='geral';
 const rs=S.L.filter(x=>G||x.data.slice(0,7)==m).sort((a,b)=>a.data<b.data?-1:1),mv=rs.filter(x=>x.acao!='SALDO'&&x.acao!='TRANSFERÊNCIA');
 const en=sum(mv.filter(x=>tot(x)>0),tot),sa=sum(mv.filter(x=>tot(x)<0),tot),ac=S.L.filter(x=>G||x.data.slice(0,7)<=m);
@@ -106,5 +108,8 @@ function his(){const V={add:'Adicionou',edit:'Editou',del:'Excluiu'};
 return `<h2>Histórico</h2>`+(S.H.map(x=>{const [a,n]=String(x.acao).split(' ');let d={};try{d=JSON.parse(x.detalhe)}catch(e){}
 const v=d.valor!=null?R(d.valor):(d.conta!=null||d.dinheiro!=null)?R((+d.conta||0)+(+d.dinheiro||0)):'';
 return `<div class="c"><div class="row"><b class="${a=='del'?'out':a=='add'?'in':''}">${V[a]||a} ${n=='Despesas'?'despesa':'lançamento'}</b><small>${x.quando}</small></div><div>${d.item||d.descricao||d.acao||'-'}</div><small>${[d.acao,v,d.data?dt(d.data):''].filter(Boolean).join(' · ')}</small></div>`}).join('')||'<div class="c">Sem alterações ainda.</div>')}
-</script>
-</body></html>
+(async()=>{let v=null;try{v=JSON.parse(localStorage.getItem('vg')||'null')}catch(e){}
+if(!v)return;$('#login').hidden=true;$('#app').hidden=false;$('#app').innerHTML='<div style="padding:42vh 0;text-align:center"><span class="sp" style="border-color:#7f8ea6;border-top-color:transparent"></span></div>';
+try{S.t=v.t;S.role=v.r;const ok=adm()?['lan','rel','dsp','his']:['rel','dsp'],t=localStorage.getItem('vgt');S.tab=ok.includes(t)?t:adm()?'lan':'rel';await load()}
+catch(e){try{localStorage.removeItem('vg')}catch(x){}S.t=null;$('#app').hidden=true;$('#login').hidden=false}})();
+</script></body></html>
