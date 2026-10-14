@@ -36,6 +36,7 @@ nav button{flex:1;border:0;background:none;color:var(--m);font-size:11px;padding
 <div id="app" hidden></div>
 <script>
 const API='https://script.google.com/macros/s/AKfycbzG0EHNOLlRbVJtwyJkcS6KMaYsRq_de3b6q9IvSP0D7oyKMQgmmPtlcHRsnB_CuiCmRw/exec', IMG='https://i.ibb.co/GjwfK1V/IMG-3685.jpg';
+const CAT=['Salgados e lanches','Ingredientes','Bebidas','Embalagens','Limpeza','Outros'];
 const AC={VENDAS:1,EVENTOS:1,OFERTA:1,SALDO:1,COMPRAS:-1,PAGAMENTO:-1,'DESPESAS IGREJA':-1,'TRANSFERÊNCIA':0};
 let S={t:null,role:null,L:[],D:[],H:[],tab:'rel',mes:'',ed:null};
 const $=s=>document.querySelector(s),R=v=>(+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -59,17 +60,18 @@ $('#app').innerHTML=`<header class="noprint"><img src="${IMG}"><b>Verbo Gourmet<
 function lan(){const d=S.pay&&S.D.find(x=>x.id==S.pay),e=S.ed||(d?{data:today(),acao:'DESPESAS IGREJA',descricao:String(d.item).toUpperCase(),conta:d.valor,dinheiro:''}:{data:today(),acao:'VENDAS',descricao:'',conta:'',dinheiro:''}),n=v=>v?Math.abs(v):'',P=S.D.filter(x=>x.status=='Pendente');
 return `<h2>${e.id?'Editar':'Novo'} lançamento</h2>${!e.id&&P.length?`<div class="c"><small>Pagar uma despesa pendente (opcional)</small><br><br><select onchange="S.pay=this.value;S.ed=null;draw()"><option value="">Escolher despesa...</option>${P.map(x=>`<option value="${x.id}" ${x.id==S.pay?'selected':''}>${x.item} · ${R(x.valor)}</option>`).join('')}</select><small>${d?'Confira o valor e salve: ela sai da lista de pendentes.':''}</small></div>`:''}
 <div class="c"><input id="f_d" type="date" value="${e.data}">
-<select id="f_a">${Object.keys(AC).filter(k=>k!='SALDO'||e.acao=='SALDO').map(k=>`<option ${k==e.acao?'selected':''}>${k}</option>`).join('')}</select>
+<select id="f_a" onchange="$('#kw').hidden=this.value!='COMPRAS'">${Object.keys(AC).filter(k=>k!='SALDO'||e.acao=='SALDO').map(k=>`<option ${k==e.acao?'selected':''}>${k}</option>`).join('')}</select>
+<div id="kw" ${e.acao=='COMPRAS'?'':'hidden'}><select id="f_k"><option value="">Categoria da compra...</option>${CAT.map(c=>`<option ${c==e.categoria?'selected':''}>${c}</option>`).join('')}</select></div>
 <input id="f_s" placeholder="Descrição" value="${esc(e.descricao)}">
 <input id="f_c" type="number" step="0.01" inputmode="decimal" placeholder="Valor em conta (Pix/cartão)" value="${n(e.conta)}">
 <input id="f_h" type="number" step="0.01" inputmode="decimal" placeholder="Valor em dinheiro" value="${n(e.dinheiro)}">
 <small>Transferência: informe só o valor em conta; ele sai do dinheiro.</small><br><br>
 <button class="p" id="sv" onclick="salvarL()">Salvar lançamento</button></div>`}
 async function salvarL(){const bt=$('#sv');if(bt.disabled)return;const a=$('#f_a').value,k=AC[a],c=+$('#f_c').value||0,h=+$('#f_h').value||0;
-if(!$('#f_d').value||!(c||h))return alert('Preencha a data e um valor.');
-const r={id:S.ed?.id,data:$('#f_d').value,acao:a,descricao:$('#f_s').value.trim().toUpperCase(),conta:k?k*c:c,dinheiro:k?k*h:-c,usuario:'admin'};
+if(!$('#f_d').value||!(c||h))return alert('Preencha a data e um valor.');if(a=='COMPRAS'&&!$('#f_k').value)return alert('Escolha a categoria da compra (ou Outros).');
+const r={id:S.ed?.id,data:$('#f_d').value,acao:a,descricao:$('#f_s').value.trim().toUpperCase(),conta:k?k*c:c,dinheiro:k?k*h:-c,usuario:'admin',categoria:a=='COMPRAS'?$('#f_k').value:''};
 bt.disabled=true;bt.textContent='Salvando...';
-try{const d=!S.ed&&S.pay&&S.D.find(x=>x.id==S.pay);await api({a:S.ed?'edit':'add',n:'Lancamentos',r});let w='';
+try{const d=!S.ed&&S.pay&&S.D.find(x=>x.id==S.pay);if(!S.ed){const f=(await api({a:'list'})).L,q=v=>(+v||0).toFixed(2);if(f.some(x=>x.data==r.data&&x.acao==r.acao&&(x.descricao||'')==r.descricao&&q(x.conta)==q(r.conta)&&q(x.dinheiro)==q(r.dinheiro))&&!confirm('Já existe um lançamento igual (mesma data, ação, descrição e valores). Salvar mesmo assim?')){bt.disabled=false;bt.textContent='Salvar lançamento';return}}await api({a:S.ed?'edit':'add',n:'Lancamentos',r});let w='';
 if(d){try{await api({a:'edit',n:'Despesas',r:{...d,status:'Pago'}})}catch(x){w='Lançamento salvo, mas não consegui baixar a despesa pendente. Edite-a em Despesas gerais.'}}
 S.ed=null;S.pay=null;await load();w?alert(w):toast('✓ Lançamento salvo')}
 catch(e){alert(e);if(/Sessão/.test(e))sair();bt.disabled=false;bt.textContent='Salvar lançamento'}}
@@ -77,16 +79,16 @@ function rel(){const ms=[...new Set(S.L.map(x=>x.data.slice(0,7)))].sort().rever
 const rs=S.L.filter(x=>G||x.data.slice(0,7)==m).sort((a,b)=>a.data<b.data?-1:1),mv=rs.filter(x=>x.acao!='SALDO'&&!/^TRANSFER/i.test(x.acao));
 const en=sum(mv.filter(x=>tot(x)>0),tot),sa=sum(mv.filter(x=>tot(x)<0),tot),ac=S.L.filter(x=>G||x.data.slice(0,7)<=m);
 const cc=sum(ac,x=>+x.conta||0),cd=sum(ac,x=>+x.dinheiro||0),pp=sum(S.D.filter(x=>x.status=='Pendente'),x=>+x.valor||0),by={};mv.forEach(x=>by[x.acao]=(by[x.acao]||0)+tot(x));
-S.pd={m,G,en,sa,cc,cd,pp,by,rs,b:G?(ms[0]||today().slice(0,7)):m};S.rep=`VERBO GOURMET - ${G?'GERAL':m.split('-').reverse().join('/')}\nEntradas: ${R(en)}\nSaídas: ${R(-sa)}\nResultado: ${R(en+sa)}\nSaldo em conta: ${R(cc)}\nSaldo em dinheiro: ${R(cd)}\nSaldo total: ${R(cc+cd)}\nA pagar (pendentes): ${R(pp)}\n`+Object.entries(by).map(([k,v])=>`${k}: ${R(v)}`).join('\n');
+S.pd={m,G,en,sa,cc,cd,pp,by,rs,ct:cats(mv),b:G?(ms[0]||today().slice(0,7)):m};S.rep=`VERBO GOURMET - ${G?'GERAL':m.split('-').reverse().join('/')}\nEntradas: ${R(en)}\nSaídas: ${R(-sa)}\nResultado: ${R(en+sa)}\nSaldo em conta: ${R(cc)}\nSaldo em dinheiro: ${R(cd)}\nSaldo total: ${R(cc+cd)}\nA pagar (pendentes): ${R(pp)}\n`+Object.entries(by).map(([k,v])=>`${k}: ${R(v)}`).join('\n');
 return `<h2>Relatório</h2><select onchange="S.mes=this.value;draw()"><option value="geral" ${G?'selected':''}>Geral (todos os períodos)</option>${ms.map(x=>`<option value="${x}" ${x==m?'selected':''}>${x.split('-').reverse().join('/')}</option>`).join('')}</select>
 <div class="hero"><small>${G?'Saldo total':'Saldo no fim do mês'}</small><b>${R(cc+cd)}</b><span>Em conta ${R(cc)} · Em dinheiro ${R(cd)}</span></div>
 <div class="g"><div class="c">Entradas<b class="in">${R(en)}</b></div><div class="c">Saídas<b class="out">${R(-sa)}</b></div></div>
 <div class="c" style="margin-top:10px">Resultado do período<b style="display:block;font-size:20px;margin-top:4px">${R(en+sa)}</b></div>
-<div class="c pend">Despesas a pagar (pendentes)<b class="out">${R(pp)}</b><small>Saldo após pagar tudo: ${R(cc+cd-pp)}</small></div>
-${bloco(S.pd.b)}<div class="c">${Object.entries(by).map(([k,v])=>`<div class="row"><span>${k}</span><b>${R(v)}</b></div>`).join('')}</div>
+<div class="c pend">Despesas a pagar (pendentes)<b class="out">${R(pp)}</b><small>Saldo após pagar tudo: ${R(cc+cd-pp)}</small>${(()=>{const v=S.D.filter(x=>x.status=='Pendente'&&x.vencimento&&x.vencimento<today());return v.length?`<br><small class="out">⚠ ${v.length} vencida(s): ${R(sum(v,x=>+x.valor||0))}</small>`:''})()}</div>
+${S.pd.ct}${bloco(S.pd.b)}<div class="c">${Object.entries(by).map(([k,v])=>`<div class="row"><span>${k}</span><b>${R(v)}</b></div>`).join('')}</div>
 ${conf(ac)}<div class="g noprint" style="margin-bottom:12px"><button class="p" onclick="comp()">Compartilhar</button><button class="p" onclick="csv('${m}')">Baixar Excel</button></div>
 <button class="p noprint" style="margin-bottom:14px;background:#555" onclick="pdf()">Gerar PDF com resumo do mês</button>
-${G?mt():rs.map(x=>`<div class="c row"><div><small>${dt(x.data)} · ${x.acao}</small><br>${x.descricao||'-'}</div><div style="text-align:right"><b class="${tot(x)<0?'out':'in'}">${R(tot(x))}</b>${adm()?`<br><button class="bt" onclick="S.ed=S.L.find(y=>y.id=='${x.id}');S.tab='lan';draw()">✏️</button><button class="bt" onclick="confirm('Excluir este lançamento?')&&envia('Lancamentos','del',{id:'${x.id}'})">🗑</button>`:''}</div></div>`).join('')}`}
+${G?mt():rs.map(x=>`<div class="c row"><div><small>${dt(x.data)} · ${x.acao}${x.categoria?' · '+x.categoria:''}</small><br>${x.descricao||'-'}</div><div style="text-align:right"><b class="${tot(x)<0?'out':'in'}">${R(tot(x))}</b>${adm()?`<br><button class="bt" onclick="S.ed=S.L.find(y=>y.id=='${x.id}');S.tab='lan';draw()">✏️</button><button class="bt" onclick="confirm('Excluir este lançamento?')&&envia('Lancamentos','del',{id:'${x.id}'})">🗑</button>`:''}</div></div>`).join('')}`}
 const lb=k=>k.split('-').reverse().join('/'),pm=k=>{let[y,m]=k.split('-').map(Number);if(--m<1){m=12;y--}return y+'-'+String(m).padStart(2,'0')};
 const mo=()=>{const o={};S.L.filter(x=>x.acao!='SALDO'&&!/^TRANSFER/i.test(x.acao)).forEach(x=>{const k=x.data.slice(0,7),v=o[k]||(o[k]={e:0,s:0});tot(x)>0?v.e+=tot(x):v.s-=tot(x)});return o};
 function cmp(b){const o=mo(),a=o[b]||{e:0,s:0},p=o[pm(b)]||{e:0,s:0},f=(x,y,i)=>{if(!y)return'—';const q=(x-y)/Math.abs(y)*100,g=i?q<=0:q>=0;return`<span class="${g?'in':'out'}">${q>=0?'▲':'▼'} ${Math.abs(q).toFixed(0)}%</span>`};
@@ -102,32 +104,38 @@ lista=d.G?`<h3>Resumo por mês</h3><table><tr><th>Mês</th><th class="r">Entrada
 w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Verbo Gourmet - ${per}</title><style>body{font-family:-apple-system,Arial,sans-serif;color:#0f1b2e;margin:24px;font-size:13px}.h{display:flex;align-items:center;gap:14px;border-bottom:3px solid #0e2a52;padding-bottom:12px;margin-bottom:14px}.h img{width:72px;height:72px;border-radius:14px}.h h1{font-size:22px;margin:0;color:#0e2a52}.h small{color:#5f6f87;display:block}table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;border-bottom:1px solid #dde3ec;text-align:left}th{color:#5f6f87}.r{text-align:right}.t td,.t th{text-align:right}.t td:first-child,.t th:first-child{text-align:left}.in{color:#2e7d4f}.out{color:#b3261e}.c{border:1px solid #ccd5e2;border-radius:10px;padding:10px;margin:12px 0;break-inside:avoid}h3{color:#0e2a52;margin:16px 0 4px}.tot td{font-weight:700;font-size:15px;background:#eef2f8}</style></head><body>
 <div class="h"><img src="${IMG}"><div><h1>Verbo Gourmet</h1><small>Relatório financeiro · ${per}</small><small>Emitido em ${new Date().toLocaleDateString('pt-BR')}</small></div></div>
 <h3>Resumo</h3><table>${T('Entradas',`<b class="in">${R(d.en)}</b>`)}${T('Saídas',`<b class="out">${R(-d.sa)}</b>`)}${T('Resultado do período',`<b>${R(d.en+d.sa)}</b>`)}${T('Saldo em conta',R(d.cc))}${T('Saldo em dinheiro',R(d.cd))}<tr class="tot"><td>Saldo total</td><td class="r">${R(d.cc+d.cd)}</td></tr>${T('Despesas a pagar (pendentes)',R(d.pp))}${T('Saldo após pagar tudo',R(d.cc+d.cd-d.pp))}</table>
-<h3>Por categoria</h3><table>${Object.entries(d.by).map(([k,v])=>T(k,R(v))).join('')}</table>${bloco(d.b)}${lista}</body></html>`);w.document.close();
+<h3>Por categoria</h3><table>${Object.entries(d.by).map(([k,v])=>T(k,R(v))).join('')}</table>${d.ct}${bloco(d.b)}${lista}</body></html>`);w.document.close();
 const i=w.document.querySelector('img'),go=()=>setTimeout(()=>w.print(),250);i.complete?go():(i.onload=i.onerror=go)}
+function cats(rs){const o={};rs.filter(x=>x.acao=='COMPRAS').forEach(x=>{const k=x.categoria||'Sem categoria';o[k]=(o[k]||0)-tot(x)});const T=sum(Object.values(o),v=>v);if(!T)return'';
+return`<div class="c"><b>Compras por categoria</b><table class="t">${Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td>${R(v)}</td><td>${(v/T*100).toFixed(0)}%</td></tr>`).join('')}</table></div>`}
+function vb(v){if(!v)return'';const n=Math.round((new Date(v+'T12:00')-new Date(today()+'T12:00'))/864e5),t=n<0?`ATRASADA ${-n}d`:n==0?'vence hoje':n<=7?`vence em ${n}d`:`vence ${dt(v).slice(0,5)}`;return` · <b class="${n<=0?'out':''}" style="${n>0&&n<=7?'color:#b26a00':''}">${t}</b>`}
+function rst(n,d){const A=n=='Despesas'?S.D:S.L,q=v=>(+v||0).toFixed(2),f=x=>n=='Despesas'?(x.item==d.item&&q(x.valor)==q(d.valor)&&x.data==d.data):(x.data==d.data&&x.acao==d.acao&&(x.descricao||'')==(d.descricao||'')&&q(x.conta)==q(d.conta)&&q(x.dinheiro)==q(d.dinheiro));
+return A.some(f)?'<br><small>✓ já está nos dados</small>':`<br><button class="p" style="padding:9px;font-size:14px;margin-top:6px" onclick="rest(${S.rs.push([n,d])-1})">↩ Restaurar</button>`}
+function rest(i){const[n,d]=S.rs[i];if(confirm('Restaurar este registro?'))envia(n,'add',{...d,id:undefined})}
 function mt(){const o={};S.L.filter(x=>x.acao!='SALDO'&&!/^TRANSFER/i.test(x.acao)).forEach(x=>{const k=x.data.slice(0,7),v=o[k]||(o[k]={e:0,s:0});tot(x)>0?v.e+=tot(x):v.s+=tot(x)});
 return Object.keys(o).sort().reverse().map(k=>{const v=o[k];return `<div class="c"><div class="row"><b>${k.split('-').reverse().join('/')}</b><b>${R(v.e+v.s)}</b></div><small class="in">Entradas ${R(v.e)}</small> &nbsp; <small class="out">Saídas ${R(-v.s)}</small></div>`}).join('')}
 function comp(){navigator.share?navigator.share({text:S.rep}):navigator.clipboard.writeText(S.rep).then(()=>alert('Resumo copiado'))}
-function csv(m){const l=S.L.filter(x=>m=='geral'||x.data.slice(0,7)==m).map(x=>[dt(x.data),x.acao,`"${x.descricao}"`,x.conta,x.dinheiro,tot(x)].join(';'));
-const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeffData;Ação;Descrição;Conta;Dinheiro;Total\n'+l.join('\n')],{type:'text/csv'}));a.download=`verbo-gourmet-${m}.csv`;a.click()}
+function csv(m){const l=S.L.filter(x=>m=='geral'||x.data.slice(0,7)==m).map(x=>[dt(x.data),x.acao,`"${x.descricao}"`,x.conta,x.dinheiro,tot(x),x.categoria||''].join(';'));
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeffData;Ação;Descrição;Conta;Dinheiro;Total;Categoria\n'+l.join('\n')],{type:'text/csv'}));a.download=`verbo-gourmet-${m}.csv`;a.click()}
 const IC={lan:'<path d="M12 5v14M5 12h14"/>',rel:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',dsp:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/>',his:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'};
 const ic=k=>`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
 function sel(m){return `<select onchange="S.mes=this.value;draw()"><option value="geral" ${m=='geral'?'selected':''}>Geral (todos os períodos)</option>${[...new Set(S.L.map(x=>x.data.slice(0,7)))].sort().reverse().map(x=>`<option value="${x}" ${x==m?'selected':''}>${x.split('-').reverse().join('/')}</option>`).join('')}</select>`}
-function dsp(){const e=S.ed||{data:today(),item:'',qtd:1,valor:'',status:'Pendente'},m=S.mes||'geral',f=x=>m=='geral'||x.data.slice(0,7)==m;
+function dsp(){const e=S.ed||{data:today(),item:'',qtd:1,valor:'',status:'Pendente',vencimento:''},m=S.mes||'geral',f=x=>m=='geral'||x.data.slice(0,7)==m;
 const A=S.L.filter(x=>['DESPESAS IGREJA','EVENTOS','OFERTA'].includes(x.acao)&&f(x)),D=S.D.filter(x=>x.status=='Pendente'),s=a=>sum(A.filter(x=>x.acao==a),x=>Math.abs(tot(x))),rp=()=>sum(D,x=>+x.valor||0);
-const it=[...A.map(x=>({d:x.data,t:x.descricao||x.acao,s:x.acao,v:tot(x),id:x.id,L:1})),...D.map(x=>({d:x.data,t:x.item,s:`A pagar · ${x.qtd}x`,v:-x.valor,id:x.id}))].sort((a,b)=>a.d<b.d?1:-1);
+const it=[...A.map(x=>({d:x.data,t:x.descricao||x.acao,s:x.acao,v:tot(x),id:x.id,L:1})),...D.map(x=>({d:x.data,t:x.item,s:`A pagar · ${x.qtd}x`,vc:x.vencimento,v:-x.valor,id:x.id}))].sort((a,b)=>a.d<b.d?1:-1);
 const bt=x=>adm()?`<br><button class="bt" onclick="S.ed=S.${x.L?'L':'D'}.find(y=>y.id=='${x.id}');${x.L?"S.tab='lan';":''}draw()">✏️</button><button class="bt" onclick="confirm('Excluir?')&&envia('${x.L?'Lancamentos':'Despesas'}','del',{id:'${x.id}'})">🗑</button>`:'';
 return `<h2>Despesas gerais</h2>${sel(m)}
-<div class="g" style="margin-bottom:12px"><div class="c">Despesas da igreja<b class="out">${R(s('DESPESAS IGREJA'))}</b></div><div class="c">Eventos<b class="in">${R(s('EVENTOS'))}</b></div><div class="c">Ofertas<b class="in">${R(s('OFERTA'))}</b></div><div class="c">A pagar<b class="out">${R(rp())}</b><small>${D.length} pendente(s)</small></div></div>
+<div class="g" style="margin-bottom:12px"><div class="c">Despesas da igreja<b class="out">${R(s('DESPESAS IGREJA'))}</b></div><div class="c">Eventos<b class="in">${R(s('EVENTOS'))}</b></div><div class="c">Ofertas<b class="in">${R(s('OFERTA'))}</b></div><div class="c">A pagar<b class="out">${R(rp())}</b><small>${D.length} pendente(s)${(n=>n?` · ${n} vencida(s)`:'')(D.filter(x=>x.vencimento&&x.vencimento<today()).length)}</small></div></div>
 ${adm()?`<div class="c"><small>Nova despesa a pagar (depois você paga em Lançamento)</small><br><br><input id="d_i" placeholder="Item (ex.: Kit LED)" value="${esc(e.item)}"><input id="d_q" type="number" placeholder="Qtd" value="${e.qtd}"><input id="d_v" type="number" step="0.01" inputmode="decimal" placeholder="Valor" value="${e.valor}">
-<input id="d_d" type="date" value="${e.data}">
+<input id="d_d" type="date" value="${e.data}"><small>Vencimento (opcional)</small><input id="d_e" type="date" value="${e.vencimento||''}">
 <button class="p" onclick="salvarD()">${e.id?'Salvar alteração':'Adicionar despesa a pagar'}</button></div>`:''}
-${it.map(x=>`<div class="c row"><div><small>${dt(x.d)} · ${x.s}</small><br>${x.t}</div><div style="text-align:right"><b class="${x.v<0?'out':'in'}">${R(x.v)}</b>${bt(x)}</div></div>`).join('')||'<div class="c">Nada neste período.</div>'}`}
-function salvarD(){if(!$('#d_i').value||!$('#d_v').value)return alert('Informe o item e o valor.');
-envia('Despesas',S.ed?'edit':'add',{id:S.ed?.id,data:$('#d_d').value,item:$('#d_i').value.trim(),qtd:+$('#d_q').value||1,valor:+$('#d_v').value,status:S.ed?.status||'Pendente'})}
-function his(){const V={add:'Adicionou',edit:'Editou',del:'Excluiu'};
+${it.map(x=>`<div class="c row"><div><small>${dt(x.d)} · ${x.s}${vb(x.vc)}</small><br>${x.t}</div><div style="text-align:right"><b class="${x.v<0?'out':'in'}">${R(x.v)}</b>${bt(x)}</div></div>`).join('')||'<div class="c">Nada neste período.</div>'}`}
+function salvarD(){if(!$('#d_i').value||!$('#d_v').value)return alert('Informe o item e o valor.');if(!S.ed&&S.D.some(x=>x.status=='Pendente'&&String(x.item).trim().toLowerCase()==$('#d_i').value.trim().toLowerCase()&&+x.valor==+$('#d_v').value)&&!confirm('Já existe uma despesa pendente igual. Adicionar mesmo assim?'))return;
+envia('Despesas',S.ed?'edit':'add',{id:S.ed?.id,data:$('#d_d').value,item:$('#d_i').value.trim(),qtd:+$('#d_q').value||1,valor:+$('#d_v').value,status:S.ed?.status||'Pendente',vencimento:$('#d_e').value})}
+function his(){S.rs=[];const V={add:'Adicionou',edit:'Editou',del:'Excluiu'};
 return `<h2>Histórico</h2>`+(S.H.map(x=>{const [a,n]=String(x.acao).split(' ');let d={};try{d=JSON.parse(x.detalhe)}catch(e){}
 const v=d.valor!=null?R(d.valor):(d.conta!=null||d.dinheiro!=null)?R((+d.conta||0)+(+d.dinheiro||0)):'';
-return `<div class="c"><div class="row"><b class="${a=='del'?'out':a=='add'?'in':''}">${V[a]||a} ${n=='Despesas'?'despesa':'lançamento'}</b><small>${x.quando}</small></div><div>${d.item||d.descricao||d.acao||'-'}</div><small>${[d.acao,v,d.data?dt(d.data):''].filter(Boolean).join(' · ')}</small></div>`}).join('')||'<div class="c">Sem alterações ainda.</div>')}
+return `<div class="c"><div class="row"><b class="${a=='del'?'out':a=='add'?'in':''}">${V[a]||a} ${n=='Despesas'?'despesa':'lançamento'}</b><small>${x.quando}</small></div><div>${d.item||d.descricao||d.acao||'-'}</div><small>${[d.acao,v,d.data?dt(d.data):''].filter(Boolean).join(' · ')}</small>${a=='del'?rst(n,d):''}</div>`}).join('')||'<div class="c">Sem alterações ainda.</div>')}
 (async()=>{let v=null;try{v=JSON.parse(localStorage.getItem('vg')||'null')}catch(e){}
 if(!v)return;$('#login').hidden=true;$('#app').hidden=false;$('#app').innerHTML='<div style="padding:42vh 0;text-align:center"><span class="sp" style="border-color:#7f8ea6;border-top-color:transparent"></span></div>';
 try{S.t=v.t;S.role=v.r;const ok=adm()?['lan','rel','dsp','his']:['rel','dsp'],t=localStorage.getItem('vgt');S.tab=ok.includes(t)?t:adm()?'lan':'rel';await load()}
