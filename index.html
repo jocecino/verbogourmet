@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0e2a52">
@@ -6,7 +5,7 @@
 <style>
 *{box-sizing:border-box;margin:0;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif}
 :root{--b:#0e2a52;--bg:#e9eef5;--c:#fff;--t:#0f1b2e;--m:#5f6f87;--ok:#2e7d4f;--no:#b3261e}
-@media(prefers-color-scheme:dark){:root{--bg:#0a1426;--c:#12213d;--t:#e8edf5;--m:#98a6bd;--b:#2f5fae}}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1426;--c:#12213d;--t:#e8edf5;--m:#98a6bd;--b:#2f5fae}nav .on{color:#9ec1ff}}
 body{background:var(--bg);color:var(--t)}
 #login{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:24px;background:radial-gradient(circle at 50% 25%,#1d4378,#0a1d3b 70%);color:#e9eef7}#login>*{width:100%;max-width:340px}#login>#logo{width:190px;border-radius:28px;box-shadow:0 10px 40px #0009;margin-bottom:18px}
 #login h1{font-size:34px;font-weight:700}#login p{opacity:.85;margin-bottom:8px}
@@ -22,12 +21,13 @@ main{padding:16px 16px 110px}h2{font-size:24px;margin:8px 0 14px}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:color-mix(in srgb,var(--c) 88%,transparent);backdrop-filter:blur(16px);padding:6px 4px calc(6px + env(safe-area-inset-bottom));border-top:1px solid #8883}
 nav button{flex:1;border:0;background:none;color:var(--m);font-size:11px;padding:4px}nav i{display:block;font-style:normal;font-size:22px}nav .on{color:var(--b);font-weight:700}
 .chip{font-size:12px;padding:3px 9px;border-radius:99px;background:#8882}header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top));background:linear-gradient(#0e2a52,#0a1d3b);color:#e9eef7}header img{width:34px;height:34px;border-radius:8px}header b{flex:1}header .chip{background:#c7cfdb;color:#0e2a52;font-weight:600}header button{border:0;background:none;color:#c7cfdb;font-size:14px}
+[hidden]{display:none!important}body{overflow-x:hidden}.c{overflow-wrap:anywhere}input[type=date]{-webkit-appearance:none;appearance:none;min-height:50px;text-align:left}input{min-width:0;max-width:100%}nav button{white-space:nowrap}nav svg{display:block;margin:0 auto 2px}.sp{display:inline-block;width:16px;height:16px;border:2.5px solid #0e2a52;border-top-color:transparent;border-radius:50%;animation:r .7s linear infinite;vertical-align:-3px;margin-right:6px}@keyframes r{to{transform:rotate(360deg)}}@keyframes fi{from{opacity:0;transform:translateY(12px)}}#wel{display:none;font-size:23px;font-weight:600;line-height:1.35;animation:fi .6s}.ok #wel{display:block}.ok #pw,.ok #err,.ok #go,.ok #sub{display:none}.ck{width:64px;height:64px;margin:0 auto 14px;border-radius:50%;background:linear-gradient(#f4f7fb,#b9c4d4);color:#0e2a52;font-size:34px;line-height:64px}
 @media print{nav,.noprint{display:none}}
 </style></head><body>
-<div id="login"><img id="logo" alt="Verbo Gourmet"><p>Financeiro e despesas</p>
+<div id="login"><img id="logo" alt="Verbo Gourmet" src="https://i.ibb.co/GjwfK1V/IMG-3685.jpg"><p id="sub">Financeiro e despesas</p>
 <input id="pw" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key=='Enter')entrar()">
-<div id="err"></div><button class="p" onclick="entrar()">Entrar</button></div>
-<div id="app" hidden></div>
+<div id="err"></div><button class="p" id="go" onclick="entrar()">Entrar</button><div id="wel"></div></div>
+<div id="app" hidden=""></div>
 <script>
 const API='https://script.google.com/macros/s/AKfycbzG0EHNOLlRbVJtwyJkcS6KMaYsRq_de3b6q9IvSP0D7oyKMQgmmPtlcHRsnB_CuiCmRw/exec', IMG='https://i.ibb.co/GjwfK1V/IMG-3685.jpg';
 const AC={VENDAS:1,EVENTOS:1,OFERTA:1,SALDO:1,COMPRAS:-1,PAGAMENTO:-1,'DESPESAS IGREJA':-1,'TRANSFERÊNCIA':0};
@@ -37,11 +37,15 @@ const adm=()=>S.role=='admin',tot=x=>(+x.conta||0)+(+x.dinheiro||0),sum=(a,f)=>a
 const dt=d=>String(d).split('-').reverse().join('/'),esc=s=>String(s??'').replace(/"/g,'&quot;'),today=()=>new Date().toISOString().slice(0,10);
 $('#logo').src=IMG;
 async function api(o){const r=await fetch(API,{method:'POST',body:JSON.stringify({t:S.t,...o})}),j=await r.json();if(j.erro)throw j.erro;return j}
-async function entrar(){try{const j=await api({a:'login',p:$('#pw').value});S.t=j.token;S.role=j.role;S.tab=adm()?'lan':'rel';await load();$('#login').hidden=true;$('#app').hidden=false}catch(e){$('#err').textContent=e}}
+async function entrar(){const b=$('#go');if(b.disabled||!$('#pw').value)return;$('#err').textContent='';b.disabled=true;b.innerHTML='<span class="sp"></span>Verificando...';
+try{const j=await api({a:'login',p:$('#pw').value});S.t=j.token;S.role=j.role;S.tab=adm()?'lan':'rel';
+$('#wel').innerHTML='<div class="ck">✓</div>'+(adm()?'Bem-vindo, administrador da Verbo Gourmet':'Bem-vindo, liderança da Verbo Sobradinho');$('#login').classList.add('ok');
+await Promise.all([load(),new Promise(r=>setTimeout(r,2200))]);$('#login').hidden=true;$('#app').hidden=false;scrollTo(0,0)}
+catch(e){$('#err').textContent=e;$('#login').classList.remove('ok');b.disabled=false;b.textContent='Entrar'}}
 async function load(){const j=await api({a:'list'});Object.assign(S,{L:j.L,D:j.D,H:j.H});draw()}
-async function envia(n,a,r){try{await api({a,n,r});S.ed=null;await load()}catch(e){alert(e);if(/Sessão/.test(e))location.reload()}}
-function draw(){const t=[['rel','📊','Relatório'],['dsp','🧾','Despesas']];if(adm()){t.unshift(['lan','➕','Lançamento']);t.push(['his','🕘','Histórico'])}
-$('#app').innerHTML=`<header class="noprint"><img src="${IMG}"><b>Verbo Gourmet</b><span class="chip">${adm()?'Admin':'Liderança'}</span><button onclick="location.reload()">Sair</button></header><main>${{rel,dsp,lan,his}[S.tab]()}</main><nav>${t.map(x=>`<button class="${x[0]==S.tab?'on':''}" onclick="S.tab='${x[0]}';S.ed=null;draw()"><i>${x[1]}</i>${x[2]}</button>`).join('')}</nav>`}
+async function envia(n,a,r){if(a=='del')r=(n=='Despesas'?S.D:S.L).find(x=>x.id==r.id)||r;try{await api({a,n,r});S.ed=null;await load()}catch(e){alert(e);if(/Sessão/.test(e))location.reload()}}
+function draw(){const t=[['rel','📊','Relatório'],['dsp','','Despesas gerais']];if(adm()){t.unshift(['lan','➕','Lançamento']);t.push(['his','🕘','Histórico'])}
+$('#app').innerHTML=`<header class="noprint"><img src="${IMG}"><b>Verbo Gourmet</b><span class="chip">${adm()?'Admin':'Liderança'}</span><button onclick="location.reload()">Sair</button></header><main>${{rel,dsp,lan,his}[S.tab]()}</main><nav>${t.map(x=>`<button class="${x[0]==S.tab?'on':''}" onclick="S.tab='${x[0]}';S.ed=null;draw()"><i>${ic(x[0])}</i>${x[2]}</button>`).join('')}</nav>`}
 function lan(){const e=S.ed||{data:today(),acao:'VENDAS',descricao:'',conta:'',dinheiro:''},n=v=>v?Math.abs(v):'';
 return `<h2>${e.id?'Editar':'Novo'} lançamento</h2><div class="c"><input id="f_d" type="date" value="${e.data}">
 <select id="f_a">${Object.keys(AC).map(k=>`<option ${k==e.acao?'selected':''}>${k}</option>`).join('')}</select>
@@ -71,13 +75,24 @@ return Object.keys(o).sort().reverse().map(k=>{const v=o[k];return `<div class="
 function comp(){navigator.share?navigator.share({text:S.rep}):navigator.clipboard.writeText(S.rep).then(()=>alert('Resumo copiado'))}
 function csv(m){const l=S.L.filter(x=>m=='geral'||x.data.slice(0,7)==m).map(x=>[dt(x.data),x.acao,`"${x.descricao}"`,x.conta,x.dinheiro,tot(x)].join(';'));
 const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeffData;Ação;Descrição;Conta;Dinheiro;Total\n'+l.join('\n')],{type:'text/csv'}));a.download=`verbo-gourmet-${m}.csv`;a.click()}
-function dsp(){const e=S.ed||{data:today(),item:'',qtd:1,valor:'',status:'Pago'},s=t=>sum(S.D.filter(x=>x.status==t),x=>+x.valor||0);
-return `<h2>Despesas da reforma</h2><div class="g" style="margin-bottom:12px"><div class="c">Pago<b class="in">${R(s('Pago'))}</b></div><div class="c">Pendente<b class="out">${R(s('Pendente'))}</b></div></div>
-${adm()?`<div class="c"><input id="d_i" placeholder="Item (ex.: Kit LED)" value="${esc(e.item)}"><input id="d_q" type="number" placeholder="Qtd" value="${e.qtd}"><input id="d_v" type="number" step="0.01" inputmode="decimal" placeholder="Valor" value="${e.valor}">
+const IC={lan:'<path d="M12 5v14M5 12h14"/>',rel:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',dsp:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/>',his:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'};
+const ic=k=>`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
+function sel(m){return `<select onchange="S.mes=this.value;draw()"><option value="geral" ${m=='geral'?'selected':''}>Geral (todos os períodos)</option>${[...new Set(S.L.map(x=>x.data.slice(0,7)))].sort().reverse().map(x=>`<option value="${x}" ${x==m?'selected':''}>${x.split('-').reverse().join('/')}</option>`).join('')}</select>`}
+function dsp(){const e=S.ed||{data:today(),item:'',qtd:1,valor:'',status:'Pago'},m=S.mes||'geral',f=x=>m=='geral'||x.data.slice(0,7)==m;
+const A=S.L.filter(x=>['DESPESAS IGREJA','EVENTOS','OFERTA'].includes(x.acao)&&f(x)),D=S.D.filter(f),s=a=>sum(A.filter(x=>x.acao==a),x=>Math.abs(tot(x))),rp=t=>sum(D.filter(x=>x.status==t),x=>+x.valor||0);
+const it=[...A.map(x=>({d:x.data,t:x.descricao||x.acao,s:x.acao,v:tot(x),id:x.id,L:1})),...D.map(x=>({d:x.data,t:x.item,s:`${x.qtd}x · Reforma · ${x.status}`,v:-x.valor,id:x.id}))].sort((a,b)=>a.d<b.d?1:-1);
+const bt=x=>adm()?`<br><button class="bt" onclick="S.ed=S.${x.L?'L':'D'}.find(y=>y.id=='${x.id}');${x.L?"S.tab='lan';":''}draw()">✏️</button><button class="bt" onclick="confirm('Excluir?')&&envia('${x.L?'Lancamentos':'Despesas'}','del',{id:'${x.id}'})">🗑</button>`:'';
+return `<h2>Despesas gerais</h2>${sel(m)}
+<div class="g" style="margin-bottom:12px"><div class="c">Despesas da igreja<b class="out">${R(s('DESPESAS IGREJA'))}</b></div><div class="c">Eventos<b class="in">${R(s('EVENTOS'))}</b></div><div class="c">Ofertas<b class="in">${R(s('OFERTA'))}</b></div><div class="c">Reforma pendente<b class="out">${R(rp('Pendente'))}</b><small>Paga ${R(rp('Pago'))}</small></div></div>
+${adm()?`<div class="c"><small>Item da reforma (pago ou a pagar)</small><br><br><input id="d_i" placeholder="Item (ex.: Kit LED)" value="${esc(e.item)}"><input id="d_q" type="number" placeholder="Qtd" value="${e.qtd}"><input id="d_v" type="number" step="0.01" inputmode="decimal" placeholder="Valor" value="${e.valor}">
 <input id="d_d" type="date" value="${e.data}"><select id="d_s">${['Pago','Pendente'].map(k=>`<option ${k==e.status?'selected':''}>${k}</option>`).join('')}</select>
-<button class="p" onclick="salvarD()">${e.id?'Salvar alteração':'Adicionar despesa'}</button></div>`:''}
-${S.D.slice().sort((a,b)=>a.data<b.data?1:-1).map(x=>`<div class="c row"><div><small>${dt(x.data)} · ${x.qtd}x · <span class="chip">${x.status}</span></small><br>${x.item}</div><div style="text-align:right"><b>${R(x.valor)}</b>${adm()?`<br><button class="bt" onclick="S.ed=S.D.find(y=>y.id=='${x.id}');draw()">✏️</button><button class="bt" onclick="confirm('Excluir esta despesa?')&&envia('Despesas','del',{id:'${x.id}'})">🗑</button>`:''}</div></div>`).join('')}`}
+<button class="p" onclick="salvarD()">${e.id?'Salvar alteração':'Adicionar item'}</button></div>`:''}
+${it.map(x=>`<div class="c row"><div><small>${dt(x.d)} · ${x.s}</small><br>${x.t}</div><div style="text-align:right"><b class="${x.v<0?'out':'in'}">${R(x.v)}</b>${bt(x)}</div></div>`).join('')||'<div class="c">Nada neste período.</div>'}`}
 function salvarD(){if(!$('#d_i').value||!$('#d_v').value)return alert('Informe o item e o valor.');
 envia('Despesas',S.ed?'edit':'add',{id:S.ed?.id,data:$('#d_d').value,item:$('#d_i').value.trim(),qtd:+$('#d_q').value||1,valor:+$('#d_v').value,status:$('#d_s').value})}
-function his(){return `<h2>Histórico</h2>`+(S.H.map(x=>`<div class="c"><small>${x.quando} · ${x.acao}</small><br><small>${String(x.detalhe).slice(0,140)}</small></div>`).join('')||'<div class="c">Sem alterações ainda.</div>')}
-</script></body></html>
+function his(){const V={add:'Adicionou',edit:'Editou',del:'Excluiu'};
+return `<h2>Histórico</h2>`+(S.H.map(x=>{const [a,n]=String(x.acao).split(' ');let d={};try{d=JSON.parse(x.detalhe)}catch(e){}
+const v=d.valor!=null?R(d.valor):(d.conta!=null||d.dinheiro!=null)?R((+d.conta||0)+(+d.dinheiro||0)):'';
+return `<div class="c"><div class="row"><b class="${a=='del'?'out':a=='add'?'in':''}">${V[a]||a} ${n=='Despesas'?'despesa':'lançamento'}</b><small>${x.quando}</small></div><div>${d.item||d.descricao||d.acao||'-'}</div><small>${[d.acao,v,d.data?dt(d.data):''].filter(Boolean).join(' · ')}</small></div>`}).join('')||'<div class="c">Sem alterações ainda.</div>')}
+</script>
+</body></html>
